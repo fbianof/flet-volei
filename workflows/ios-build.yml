@@ -1,0 +1,39 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:  # executa manualmente
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0' # ou sua versão
+
+      - name: Rodar flutter pub get
+        run: flutter pub get
+
+      - name: Criar projeto iOS se necessário
+        run: flutter create .
+
+      - name: Compilar IPA (simulador)
+        run: flutter build ios --release --no-codesign
+
+      - name: Compactar IPA
+        run: |
+          mkdir -p build/ios/ipa_output
+          cd build/ios/iphoneos
+          zip -r ../../ipa_output/app.ipa Payload
+        continue-on-error: true
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-ios
+          path: build/ios/ipa_output/app.ipa
